@@ -1,0 +1,292 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Boutique en ligne Conakry</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@700;800&family=DM+Sans:wght@400;500;700&display=swap">
+<style>
+:root{--ink:#14201A;--muted:#3F4D46;--line:#DDE3DC;--bg:#F6F7F4;--card:#fff;--accent:#0F7A4A;--accent-dark:#0A5A36;--danger:#8A1C14}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 17px/1.5 'DM Sans',system-ui,sans-serif}
+h1,h2,h3{font-family:'Bricolage Grotesque',sans-serif;margin:0}
+.wrap{max-width:1200px;margin:0 auto;padding:0 20px}
+header{background:#fff;border-bottom:1px solid var(--line)}
+header .wrap{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;padding-top:14px;padding-bottom:14px}
+.brand{font:800 24px 'Bricolage Grotesque',sans-serif}
+.btn{display:inline-flex;align-items:center;justify-content:center;min-height:46px;padding:0 22px;border:0;border-radius:999px;background:var(--accent);color:#fff;font:700 16px 'DM Sans',sans-serif;text-decoration:none;cursor:pointer}
+.btn.dark{background:var(--ink);border-radius:12px}
+.btn.ghost{background:transparent;color:var(--ink);border:2px solid var(--ink)}
+.btn:disabled{opacity:.6;cursor:wait}
+.hero{padding:48px 0 24px}
+.hero h1{font-size:clamp(32px,6vw,52px);line-height:1.05;max-width:760px}
+.hero p{color:var(--muted);font-size:19px;max-width:560px}
+.pills{display:flex;flex-wrap:wrap;gap:8px 20px;color:var(--muted);font-size:15px}
+section{padding:28px 0}
+section h2{font-size:32px;margin-bottom:18px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:20px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;overflow:hidden;display:flex;flex-direction:column}
+.ph{height:150px;background:#EDF1EA;display:flex;align-items:center;justify-content:center;color:#52605A;font-size:14px}
+.card .body{padding:18px;display:flex;flex-direction:column;gap:8px;flex:1}
+.cat{font-size:13px;font-weight:700;color:#52605A;text-transform:uppercase;letter-spacing:.04em}
+.pname{font-size:19px;font-weight:700;line-height:1.25}
+.price{font-weight:700;color:var(--accent-dark)}
+.sub{font-size:15px;color:var(--muted)}
+.card .btn{margin-top:auto}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:24px}
+.cols{display:flex;flex-wrap:wrap;gap:24px;align-items:flex-start}
+.cols>*{flex:1 1 360px}
+.line{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;padding:14px 0;border-bottom:1px solid var(--line)}
+.line .nm{flex:1 1 180px}
+.qty{display:flex;align-items:center;gap:8px}
+.qty button{width:44px;height:44px;border:1px solid #B8C2B9;border-radius:12px;background:#fff;font:700 20px 'DM Sans',sans-serif;cursor:pointer}
+.link{border:0;background:none;color:var(--danger);text-decoration:underline;font:500 15px 'DM Sans',sans-serif;cursor:pointer;min-height:44px}
+.tot{display:flex;justify-content:space-between;padding-top:10px}
+.tot.big{font-size:22px;font-weight:700;border-top:2px solid var(--ink);margin-top:10px}
+label{display:flex;flex-direction:column;gap:6px;font-weight:500;margin-bottom:14px}
+input,select{min-height:48px;padding:0 14px;border:1px solid #B8C2B9;border-radius:12px;font:400 17px 'DM Sans',sans-serif;color:var(--ink);background:#fff}
+.pay{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+.pay button{min-height:46px;padding:0 16px;border-radius:12px;border:2px solid #B8C2B9;background:#fff;color:var(--ink);font:700 15px 'DM Sans',sans-serif;cursor:pointer}
+.pay button[aria-pressed=true]{border-color:var(--ink);background:var(--ink);color:#fff}
+.err{background:#FBE3E0;color:var(--danger);padding:12px 14px;border-radius:12px;font-weight:500;margin-bottom:14px}
+.ok{border:2px solid var(--accent);max-width:720px}
+.ok pre{font:400 17px/1.6 'DM Sans',sans-serif;white-space:pre-wrap;margin:0 0 12px}
+.actions{display:flex;flex-wrap:wrap;gap:12px;margin-top:14px}
+footer{background:var(--ink);color:#D5DCD6;font-size:15px;margin-top:40px}
+footer .wrap{padding-top:24px;padding-bottom:24px}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<header><div class="wrap">
+<span class="brand">[Hérico Boutique]</span>
+<a class="btn" href="#panier" id="cartLink">Panier (0)</a>
+</div></header>
+
+<div class="wrap hero">
+<h1>Tout ce qu'il vous faut, au meilleur prix, livré chez vous à Conakry</h1>
+<p>Choisissez vos produits et payez à la réception, ou par Orange Money et MTN.</p>
+<div class="pills"><span>Vente en gros et au détail</span><span>Paiement à la livraison</span><span>Livraison par commune</span></div>
+</div>
+
+<div class="wrap">
+<section id="produits">
+<h2>Nos produits</h2>
+<p class="sub" id="loadMsg">Chargement des produits…</p>
+<div class="grid" id="products"></div>
+</section>
+
+<section id="panier">
+<h2>Votre commande</h2>
+<div id="orderForm" class="cols">
+<div class="panel">
+<h3 style="font-size:24px;margin-bottom:8px">Panier</h3>
+<div id="lines"></div>
+<p class="sub" id="emptyMsg">Votre panier est vide. Ajoutez des produits dans la liste ci-dessus.</p>
+<div id="totals" hidden>
+<div class="tot"><span>Sous-total</span><strong id="tSub"></strong></div>
+<div class="tot"><span>Livraison</span><strong id="tFee"></strong></div>
+<div class="tot big"><span id="tCap">Total</span><strong id="tTotal"></strong></div>
+<p class="sub">Montant indicatif : le total final est confirmé par la boutique à l'enregistrement.</p>
+</div>
+</div>
+<form class="panel" id="form" novalidate>
+<h3 style="font-size:24px;margin-bottom:14px">Vos informations</h3>
+<label>Nom complet<input id="fName" type="text" autocomplete="name" maxlength="100"></label>
+<label>Téléphone (WhatsApp)<input id="fPhone" type="tel" autocomplete="tel" maxlength="20"></label>
+<label>Commune<select id="fCommune"><option value="">Choisir ma commune</option></select></label>
+<label>Repère (mosquée, marché, station…)<input id="fRepere" type="text" maxlength="200"></label>
+<span style="font-weight:500">Paiement</span>
+<div class="pay" id="pay">
+<button type="button" data-p="cash" aria-pressed="true">À la livraison</button>
+<button type="button" data-p="orange" aria-pressed="false">Orange Money</button>
+<button type="button" data-p="mtn" aria-pressed="false">MTN Mobile Money</button>
+</div>
+<label>Remarque (facultatif)<input id="fNote" type="text" maxlength="300"></label>
+<div class="err" id="err" role="alert" hidden></div>
+<button class="btn" style="width:100%;min-height:54px;border-radius:14px;font-size:18px" id="submit" type="submit">Confirmer la commande</button>
+</form>
+</div>
+<div class="panel ok" id="done" hidden>
+<h3 style="font-size:30px;margin-bottom:12px" id="doneTitle"></h3>
+<pre id="doneLines"></pre>
+<div class="tot"><span id="doneFeeLbl"></span><strong id="doneFee"></strong></div>
+<div class="tot big"><span>Total</span><strong id="doneTotal"></strong></div>
+<p class="sub" style="font-size:17px" id="donePay"></p>
+<div class="actions">
+<a class="btn" id="waBtn" target="_blank" rel="noopener">Envoyer sur WhatsApp</a>
+<button class="btn ghost" id="again" type="button">Nouvelle commande</button>
+</div>
+</div>
+</section>
+</div>
+
+<footer><div class="wrap">[Hérico Boutique], Conakry, Guinée</div></footer>
+
+<script>
+// ---- Configuration ----
+const SB = 'https://rwkyftmghpyeupzolvmc.supabase.co';
+const KEY = 'sb_publishable_VXZU_nR9UGwAM6gJTlgVQg_4-k9hRNB'; // clé publique : protégée par les règles RLS de la base
+const WHATSAPP = '224629015548'; // 
+// -----------------------
+
+const $ = (id) => document.getElementById(id);
+const gnf = (n) => Number(n).toLocaleString('fr-FR') + ' GNF';
+const state = { products: [], zones: {}, cart: {}, pay: 'cash' };
+const payNames = { cash: 'Paiement à la livraison', orange: 'Paiement par Orange Money', mtn: 'Paiement par MTN Mobile Money' };
+
+function h(tag, props, ...kids) {
+  const e = document.createElement(tag);
+  Object.entries(props || {}).forEach(([k, v]) => {
+    if (k === 'class') e.className = v;
+    else if (k.startsWith('on')) e.addEventListener(k.slice(2), v);
+    else e.setAttribute(k, v);
+  });
+  kids.forEach((c) => e.append(c));
+  return e;
+}
+
+async function api(path, opts) {
+  const r = await fetch(SB + path, { ...opts, headers: { apikey: KEY, 'Content-Type': 'application/json', ...(opts && opts.headers) } });
+  const data = await r.json().catch(() => null);
+  if (!r.ok) throw new Error((data && (data.message || data.error)) || 'Erreur réseau');
+  return data;
+}
+
+function saveCart() { try { localStorage.setItem('cart', JSON.stringify(state.cart)); } catch (e) {} }
+function loadCart() {
+  try {
+    const c = JSON.parse(localStorage.getItem('cart') || '{}');
+    Object.keys(c).forEach((id) => { if (Number.isInteger(c[id]) && c[id] > 0) state.cart[id] = c[id]; });
+  } catch (e) {}
+}
+
+function lines() {
+  return state.products.filter((p) => state.cart[p.id] > 0).map((p) => {
+    const qty = state.cart[p.id];
+    const gros = qty >= p.min_gros;
+    const unit = gros ? p.price_gros : p.price_detail;
+    return { p, qty, gros, unit, total: unit * qty };
+  });
+}
+
+function renderProducts() {
+  const box = $('products');
+  box.replaceChildren(...state.products.map((p) => h('div', { class: 'card' },
+    h('div', { class: 'ph' }, 'Photo du produit'),
+    h('div', { class: 'body' },
+      h('span', { class: 'cat' }, p.category),
+      h('span', { class: 'pname' }, p.name),
+      h('span', { class: 'price' }, 'Détail : ' + gnf(p.price_detail)),
+      h('span', { class: 'sub' }, 'Gros dès ' + p.min_gros + ' pièces : ' + gnf(p.price_gros)),
+      h('button', { class: 'btn dark', type: 'button', onclick: () => add(p.id, 1) }, 'Ajouter au panier')
+    )
+  )));
+}
+
+function add(id, d) {
+  const q = (state.cart[id] || 0) + d;
+  if (q <= 0) delete state.cart[id]; else state.cart[id] = Math.min(q, 500);
+  saveCart(); renderCart();
+}
+
+function renderCart() {
+  const ls = lines();
+  const count = ls.reduce((a, l) => a + l.qty, 0);
+  $('cartLink').textContent = 'Panier (' + count + ')';
+  $('emptyMsg').hidden = ls.length > 0;
+  $('totals').hidden = ls.length === 0;
+  $('lines').replaceChildren(...ls.map((l) => h('div', { class: 'line' },
+    h('div', { class: 'nm' }, h('strong', {}, l.p.name), h('div', { class: 'sub' }, gnf(l.unit) + " l'unité" + (l.gros ? ' (tarif gros)' : ''))),
+    h('div', { class: 'qty' },
+      h('button', { type: 'button', 'aria-label': 'Retirer une unité', onclick: () => add(l.p.id, -1) }, '-'),
+      h('strong', {}, String(l.qty)),
+      h('button', { type: 'button', 'aria-label': 'Ajouter une unité', onclick: () => add(l.p.id, 1) }, '+')
+    ),
+    h('strong', {}, gnf(l.total)),
+    h('button', { class: 'link', type: 'button', onclick: () => add(l.p.id, -l.qty) }, 'Retirer')
+  )));
+  const sub = ls.reduce((a, l) => a + l.total, 0);
+  const commune = $('fCommune').value;
+  const fee = state.zones[commune];
+  $('tSub').textContent = gnf(sub);
+  $('tFee').textContent = commune ? gnf(fee) : 'Choisissez votre commune';
+  $('tCap').textContent = commune ? 'Total' : 'Total hors livraison';
+  $('tTotal').textContent = gnf(sub + (fee || 0));
+}
+
+function showErr(msg) { const e = $('err'); e.textContent = msg; e.hidden = !msg; }
+
+$('pay').addEventListener('click', (ev) => {
+  const b = ev.target.closest('button'); if (!b) return;
+  state.pay = b.dataset.p;
+  $('pay').querySelectorAll('button').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+});
+$('fCommune').addEventListener('change', renderCart);
+
+$('form').addEventListener('submit', async (ev) => {
+  ev.preventDefault(); showErr('');
+  const ls = lines();
+  const name = $('fName').value.trim(), phone = $('fPhone').value.trim(), commune = $('fCommune').value, repere = $('fRepere').value.trim();
+  if (!ls.length) return showErr('Ajoutez au moins un produit au panier.');
+  if (name.length < 2) return showErr('Indiquez votre nom.');
+  if (phone.replace(/\D/g, '').length < 8) return showErr('Indiquez un numéro de téléphone valide.');
+  if (!commune) return showErr('Choisissez votre commune.');
+  if (repere.length < 3) return showErr('Indiquez un repère (mosquée, marché, station…).');
+  const btn = $('submit'); btn.disabled = true; btn.textContent = 'Envoi en cours…';
+  try {
+    const r = await api('/rest/v1/rpc/place_order', {
+      method: 'POST',
+      body: JSON.stringify({
+        p_name: name, p_phone: phone, p_commune: commune, p_repere: repere,
+        p_note: $('fNote').value.trim() || null, p_pay: state.pay,
+        p_items: ls.map((l) => ({ id: l.p.id, qty: l.qty }))
+      })
+    });
+    showDone(r, { name, phone, commune, repere, note: $('fNote').value.trim() });
+    state.cart = {}; saveCart(); renderCart();
+  } catch (e) {
+    showErr(e.message || 'La commande a échoué, réessayez.');
+  } finally {
+    btn.disabled = false; btn.textContent = 'Confirmer la commande';
+  }
+});
+
+function showDone(r, c) {
+  const summary = r.lines.map((l) => l.qty + ' x ' + l.name + ' : ' + gnf(l.line_total)).join('\n');
+  $('doneTitle').textContent = 'Commande ' + r.number + ' enregistrée';
+  $('doneLines').textContent = summary;
+  $('doneFeeLbl').textContent = 'Livraison (' + c.commune + ')';
+  $('doneFee').textContent = gnf(r.delivery_fee);
+  $('doneTotal').textContent = gnf(r.total);
+  $('donePay').textContent = payNames[state.pay] + '. La boutique vous contacte pour confirmer la livraison.';
+  const text = ['Commande ' + r.number, '', summary, '', 'Livraison (' + c.commune + ') : ' + gnf(r.delivery_fee), 'Total : ' + gnf(r.total), payNames[state.pay], '',
+    'Nom : ' + c.name, 'Téléphone : ' + c.phone, 'Repère : ' + c.repere].concat(c.note ? ['Remarque : ' + c.note] : []).join('\n');
+  $('waBtn').href = 'https://wa.me/' + WHATSAPP + '?text=' + encodeURIComponent(text);
+  $('orderForm').hidden = true; $('done').hidden = false;
+  $('done').scrollIntoView({ behavior: 'smooth' });
+}
+
+$('again').addEventListener('click', () => { $('done').hidden = true; $('orderForm').hidden = false; $('fNote').value = ''; });
+
+async function init() {
+  loadCart();
+  try {
+    const [products, zones] = await Promise.all([
+      api('/rest/v1/products?select=id,name,category,price_detail,price_gros,min_gros&active=eq.true&order=sort.asc'),
+      api('/rest/v1/delivery_zones?select=commune,fee&active=eq.true&order=commune.asc')
+    ]);
+    state.products = products;
+    zones.forEach((z) => { state.zones[z.commune] = z.fee; $('fCommune').append(h('option', { value: z.commune }, z.commune)); });
+    Object.keys(state.cart).forEach((id) => { if (!products.some((p) => p.id === id)) delete state.cart[id]; });
+    $('loadMsg').hidden = true;
+    renderProducts(); renderCart();
+  } catch (e) {
+    $('loadMsg').textContent = 'Impossible de charger les produits. Vérifiez votre connexion et rechargez la page.';
+  }
+}
+init();
+</script>
+</body>
+</html>

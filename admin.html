@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Commandes, espace vendeur</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@700;800&family=DM+Sans:wght@400;500;700&display=swap">
+<style>
+:root{--ink:#14201A;--muted:#3F4D46;--line:#DDE3DC;--bg:#F6F7F4;--accent:#0F7A4A}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 16px/1.5 'DM Sans',system-ui,sans-serif}
+h1,h2{font-family:'Bricolage Grotesque',sans-serif;margin:0}
+.wrap{max-width:980px;margin:0 auto;padding:20px}
+.top{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;margin-bottom:16px}
+.btn{min-height:44px;padding:0 18px;border:0;border-radius:12px;background:var(--ink);color:#fff;font:700 15px 'DM Sans',sans-serif;cursor:pointer}
+.btn.ghost{background:transparent;color:var(--ink);border:2px solid var(--ink)}
+.panel{background:#fff;border:1px solid var(--line);border-radius:16px;padding:20px}
+label{display:flex;flex-direction:column;gap:6px;font-weight:500;margin-bottom:14px}
+input,select{min-height:46px;padding:0 12px;border:1px solid #B8C2B9;border-radius:10px;font:400 16px 'DM Sans',sans-serif;background:#fff;color:var(--ink)}
+.err{background:#FBE3E0;color:#8A1C14;padding:10px 12px;border-radius:10px;margin-bottom:12px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:16px}
+.stat{background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px}
+.stat b{display:block;font:800 26px 'Bricolage Grotesque',sans-serif}
+.filters{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}
+.filters button{min-height:44px;padding:0 16px;border-radius:999px;border:2px solid #B8C2B9;background:#fff;font:700 14px 'DM Sans',sans-serif;cursor:pointer;color:var(--ink)}
+.filters button[aria-pressed=true]{background:var(--ink);color:#fff;border-color:var(--ink)}
+.order{background:#fff;border:1px solid var(--line);border-radius:16px;padding:18px;margin-bottom:14px}
+.order header{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;margin-bottom:10px}
+.badge{display:inline-block;padding:2px 10px;border-radius:999px;font-weight:700;font-size:13px;background:#E8ECE6}
+.s-nouvelle{background:#FBE8B8}.s-confirmee{background:#D9E6F5}.s-livree{background:#DCEFE3}.s-annulee{background:#F7D9D3}
+.items{margin:8px 0;padding:0;list-style:none}
+.items li{display:flex;justify-content:space-between;gap:10px;padding:4px 0;border-bottom:1px dashed var(--line)}
+.meta{color:var(--muted);font-size:15px}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:10px}
+a.wa{color:#0A5A36;font-weight:700}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<div class="wrap">
+<div id="login" class="panel" style="max-width:420px;margin:40px auto">
+<h1 style="font-size:28px;margin-bottom:14px">Espace vendeur</h1>
+<form id="loginForm">
+<label>E-mail<input id="email" type="email" autocomplete="username" required></label>
+<label>Mot de passe<input id="password" type="password" autocomplete="current-password" required></label>
+<div class="err" id="loginErr" role="alert" hidden></div>
+<button class="btn" type="submit" style="width:100%">Se connecter</button>
+</form>
+</div>
+
+<div id="app" hidden>
+<div class="top">
+<h1 style="font-size:30px">Commandes</h1>
+<div class="row" style="margin:0">
+<button class="btn ghost" id="refresh" type="button">Actualiser</button>
+<button class="btn ghost" id="logout" type="button">Se déconnecter</button>
+</div>
+</div>
+<div class="err" id="appErr" role="alert" hidden></div>
+<div class="stats">
+<div class="stat"><span>Nouvelles</span><b id="sNew">0</b></div>
+<div class="stat"><span>Commandes du jour</span><b id="sToday">0</b></div>
+<div class="stat"><span>Total du jour (hors annulées)</span><b id="sSum">0</b></div>
+</div>
+<div class="filters" id="filters"></div>
+<div id="list"></div>
+</div>
+</div>
+
+<script>
+const SB = 'https://rwkyftmghpyeupzolvmc.supabase.co';
+const KEY = 'sb_publishable_VXZU_nR9UGwAM6gJTlgVQg_4-k9hRNB';
+const $ = (id) => document.getElementById(id);
+const gnf = (n) => Number(n).toLocaleString('fr-FR') + ' GNF';
+const labels = { nouvelle: 'Nouvelle', confirmee: 'Confirmée', livree: 'Livrée', annulee: 'Annulée' };
+const payNames = { cash: 'À la livraison', orange: 'Orange Money', mtn: 'MTN Mobile Money' };
+let token = null, orders = [], filter = 'toutes', timer = null;
+
+function h(tag, props, ...kids) {
+  const e = document.createElement(tag);
+  Object.entries(props || {}).forEach(([k, v]) => {
+    if (k === 'class') e.className = v;
+    else if (k.startsWith('on')) e.addEventListener(k.slice(2), v);
+    else e.setAttribute(k, v);
+  });
+  kids.forEach((c) => e.append(c));
+  return e;
+}
+
+async function api(path, opts) {
+  const headers = { apikey: KEY, 'Content-Type': 'application/json', ...(opts && opts.headers) };
+  if (token) headers.Authorization = 'Bearer ' + token;
+  const r = await fetch(SB + path, { ...opts, headers });
+  if (r.status === 401) { logout(); throw new Error('Session expirée, reconnectez-vous.'); }
+  const data = r.status === 204 ? null : await r.json().catch(() => null);
+  if (!r.ok) throw new Error((data && (data.message || data.msg || data.error_description)) || 'Erreur réseau');
+  return data;
+}
+
+$('loginForm').addEventListener('submit', async (ev) => {
+  ev.preventDefault(); $('loginErr').hidden = true;
+  try {
+    const r = await api('/auth/v1/token?grant_type=password', { method: 'POST', body: JSON.stringify({ email: $('email').value.trim(), password: $('password').value }) });
+    token = r.access_token;
+    try { sessionStorage.setItem('tk', token); } catch (e) {}
+    await enter();
+  } catch (e) {
+    token = null;
+    $('loginErr').textContent = 'Connexion impossible : ' + e.message; $('loginErr').hidden = false;
+  }
+});
+
+async function enter() {
+  const ok = await api('/rest/v1/rpc/is_admin', { method: 'POST', body: '{}' });
+  if (ok !== true) { logout(); $('loginErr').textContent = "Ce compte n'est pas autorisé à gérer les commandes."; $('loginErr').hidden = false; return; }
+  $('login').hidden = true; $('app').hidden = false;
+  await load();
+  clearInterval(timer); timer = setInterval(load, 30000);
+}
+
+function logout() {
+  token = null; try { sessionStorage.removeItem('tk'); } catch (e) {}
+  clearInterval(timer);
+  $('app').hidden = true; $('login').hidden = false; $('password').value = '';
+}
+$('logout').addEventListener('click', logout);
+$('refresh').addEventListener('click', load);
+
+async function load() {
+  try {
+    orders = await api('/rest/v1/orders?select=*,order_items(*)&order=created_at.desc&limit=200');
+    $('appErr').hidden = true;
+    render();
+  } catch (e) { $('appErr').textContent = e.message; $('appErr').hidden = false; }
+}
+
+async function setStatus(o, status) {
+  try {
+    await api('/rest/v1/orders?id=eq.' + encodeURIComponent(o.id), { method: 'PATCH', headers: { Prefer: 'return=minimal' }, body: JSON.stringify({ status }) });
+    o.status = status; render();
+  } catch (e) { $('appErr').textContent = e.message; $('appErr').hidden = false; }
+}
+
+function render() {
+  const todayKey = new Date().toDateString();
+  const today = orders.filter((o) => new Date(o.created_at).toDateString() === todayKey);
+  $('sNew').textContent = orders.filter((o) => o.status === 'nouvelle').length;
+  $('sToday').textContent = today.length;
+  $('sSum').textContent = gnf(today.filter((o) => o.status !== 'annulee').reduce((a, o) => a + o.total, 0));
+  const keys = ['toutes', 'nouvelle', 'confirmee', 'livree', 'annulee'];
+  $('filters').replaceChildren(...keys.map((k) => h('button', { type: 'button', 'aria-pressed': String(filter === k), onclick: () => { filter = k; render(); } },
+    (k === 'toutes' ? 'Toutes' : labels[k]) + ' (' + (k === 'toutes' ? orders.length : orders.filter((o) => o.status === k).length) + ')')));
+  const shown = orders.filter((o) => filter === 'toutes' || o.status === filter);
+  if (!shown.length) { $('list').replaceChildren(h('p', { class: 'meta' }, 'Aucune commande pour le moment.')); return; }
+  $('list').replaceChildren(...shown.map(card));
+}
+
+function card(o) {
+  const digits = o.phone.replace(/\D/g, '');
+  const when = new Date(o.created_at).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' });
+  const sel = h('select', { 'aria-label': 'Statut de la commande ' + o.number, onchange: (ev) => setStatus(o, ev.target.value) },
+    ...Object.keys(labels).map((k) => { const op = h('option', { value: k }, labels[k]); if (k === o.status) op.selected = true; return op; }));
+  return h('div', { class: 'order' },
+    h('header', {}, h('strong', {}, o.number + ' · ' + when), h('span', { class: 'badge s-' + o.status }, labels[o.status] || o.status)),
+    h('div', {}, h('strong', {}, o.customer_name), ' · ', h('a', { class: 'wa', href: 'https://wa.me/' + digits, target: '_blank', rel: 'noopener' }, o.phone)),
+    h('div', { class: 'meta' }, o.commune + ', ' + o.repere),
+    h('ul', { class: 'items' }, ...(o.order_items || []).map((i) => h('li', {}, h('span', {}, i.qty + ' x ' + i.product_name), h('span', {}, gnf(i.line_total))))),
+    h('div', { class: 'meta' }, 'Livraison : ' + gnf(o.delivery_fee) + ' · ' + (payNames[o.pay_method] || o.pay_method)),
+    o.note ? h('div', { class: 'meta' }, 'Remarque : ' + o.note) : '',
+    h('div', { class: 'row' }, h('strong', { style: 'font-size:20px' }, 'Total : ' + gnf(o.total)), sel)
+  );
+}
+
+try { const t = sessionStorage.getItem('tk'); if (t) { token = t; enter().catch(() => logout()); } } catch (e) {}
+</script>
+</body>
+</html>
