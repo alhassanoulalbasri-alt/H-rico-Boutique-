@@ -34,6 +34,13 @@ section h2{font-size:32px;margin-bottom:18px}
 .price{font-weight:700;color:var(--accent-dark)}
 .sub{font-size:15px;color:var(--muted)}
 .card .btn{margin-top:auto}
+.gal{position:relative;height:190px;background:#EDF1EA}
+.gal .strip{display:flex;height:100%;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none}
+.gal .strip::-webkit-scrollbar{display:none}
+.gal img{flex:0 0 100%;width:100%;height:100%;object-fit:cover;scroll-snap-align:center}
+.dots{position:absolute;bottom:8px;left:0;right:0;display:flex;justify-content:center;gap:6px;pointer-events:none}
+.dots i{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.6);box-shadow:0 0 2px rgba(0,0,0,.5)}
+.dots i.on{background:#fff}
 .panel{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:24px}
 .cols{display:flex;flex-wrap:wrap;gap:24px;align-items:flex-start}
 .cols>*{flex:1 1 360px}
@@ -60,7 +67,7 @@ footer .wrap{padding-top:24px;padding-bottom:24px}
 </head>
 <body>
 <header><div class="wrap">
-<span class="brand">[Hérico Boutique]</span>
+<span class="brand" id="brandName"></span>
 <a class="btn" href="#panier" id="cartLink">Panier (0)</a>
 </div></header>
 
@@ -122,16 +129,20 @@ footer .wrap{padding-top:24px;padding-bottom:24px}
 </section>
 </div>
 
-<footer><div class="wrap">[Hérico Boutique], Conakry, Guinée</div></footer>
+<footer><div class="wrap" id="footName"></div></footer>
 
+<script src="config.js"></script>
 <script>
 // ---- Configuration ----
 const SB = 'https://rwkyftmghpyeupzolvmc.supabase.co';
 const KEY = 'sb_publishable_VXZU_nR9UGwAM6gJTlgVQg_4-k9hRNB'; // clé publique : protégée par les règles RLS de la base
-const WHATSAPP = '224629015548'; // 
+// Le nom de la boutique et le numéro WhatsApp se règlent dans le fichier config.js
+const CFG = window.SHOP || { name: 'Boutique', whatsapp: '' };
+const WHATSAPP = String(CFG.whatsapp || '').replace(/\D/g, '');
 // -----------------------
 
 const $ = (id) => document.getElementById(id);
+const imgUrl = (path) => SB + '/storage/v1/object/public/product-images/' + String(path).split('/').map(encodeURIComponent).join('/');
 const gnf = (n) => Number(n).toLocaleString('fr-FR') + ' GNF';
 const state = { products: [], zones: {}, cart: {}, pay: 'cash' };
 const payNames = { cash: 'Paiement à la livraison', orange: 'Paiement par Orange Money', mtn: 'Paiement par MTN Mobile Money' };
@@ -171,10 +182,26 @@ function lines() {
   });
 }
 
+function gallery(p) {
+  const imgs = Array.isArray(p.images) ? p.images : [];
+  if (!imgs.length) return h('div', { class: 'ph' }, 'Photo du produit');
+  const strip = h('div', { class: 'strip' }, ...imgs.map((x, i) => h('img', { src: imgUrl(x), alt: p.name + ', photo ' + (i + 1), loading: 'lazy' })));
+  const g = h('div', { class: 'gal' }, strip);
+  if (imgs.length > 1) {
+    const dots = h('div', { class: 'dots' }, ...imgs.map((_, i) => h('i', { class: i === 0 ? 'on' : '' })));
+    g.append(dots);
+    strip.addEventListener('scroll', () => {
+      const i = Math.round(strip.scrollLeft / (strip.clientWidth || 1));
+      Array.from(dots.children).forEach((d, k) => { d.className = k === i ? 'on' : ''; });
+    });
+  }
+  return g;
+}
+
 function renderProducts() {
   const box = $('products');
   box.replaceChildren(...state.products.map((p) => h('div', { class: 'card' },
-    h('div', { class: 'ph' }, 'Photo du produit'),
+    gallery(p),
     h('div', { class: 'body' },
       h('span', { class: 'cat' }, p.category),
       h('span', { class: 'pname' }, p.name),
@@ -271,10 +298,13 @@ function showDone(r, c) {
 $('again').addEventListener('click', () => { $('done').hidden = true; $('orderForm').hidden = false; $('fNote').value = ''; });
 
 async function init() {
+  $('brandName').textContent = CFG.name;
+  $('footName').textContent = CFG.name + ', Conakry, Guinée';
+  document.title = CFG.name;
   loadCart();
   try {
     const [products, zones] = await Promise.all([
-      api('/rest/v1/products?select=id,name,category,price_detail,price_gros,min_gros&active=eq.true&order=sort.asc'),
+      api('/rest/v1/products?select=id,name,category,price_detail,price_gros,min_gros,images&active=eq.true&order=sort.asc'),
       api('/rest/v1/delivery_zones?select=commune,fee&active=eq.true&order=commune.asc')
     ]);
     state.products = products;

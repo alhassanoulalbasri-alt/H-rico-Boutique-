@@ -4,21 +4,28 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex">
-<title>Commandes, espace vendeur</title>
+<title>Espace vendeur</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@700;800&family=DM+Sans:wght@400;500;700&display=swap">
 <style>
 :root{--ink:#14201A;--muted:#3F4D46;--line:#DDE3DC;--bg:#F6F7F4;--accent:#0F7A4A}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--ink);font:400 16px/1.5 'DM Sans',system-ui,sans-serif}
-h1,h2{font-family:'Bricolage Grotesque',sans-serif;margin:0}
+h1,h2,h3{font-family:'Bricolage Grotesque',sans-serif;margin:0}
 .wrap{max-width:980px;margin:0 auto;padding:20px}
 .top{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;margin-bottom:16px}
 .btn{min-height:44px;padding:0 18px;border:0;border-radius:12px;background:var(--ink);color:#fff;font:700 15px 'DM Sans',sans-serif;cursor:pointer}
 .btn.ghost{background:transparent;color:var(--ink);border:2px solid var(--ink)}
+.btn.green{background:var(--accent)}
+.btn:disabled{opacity:.6;cursor:wait}
 .panel{background:#fff;border:1px solid var(--line);border-radius:16px;padding:20px}
 label{display:flex;flex-direction:column;gap:6px;font-weight:500;margin-bottom:14px}
-input,select{min-height:46px;padding:0 12px;border:1px solid #B8C2B9;border-radius:10px;font:400 16px 'DM Sans',sans-serif;background:#fff;color:var(--ink)}
+input,select{min-height:46px;padding:0 12px;border:1px solid #B8C2B9;border-radius:10px;font:400 16px 'DM Sans',sans-serif;background:#fff;color:var(--ink);width:100%}
+input[type=file]{padding:10px 12px;height:auto}
 .err{background:#FBE3E0;color:#8A1C14;padding:10px 12px;border-radius:10px;margin-bottom:12px}
+.okmsg{background:#DCEFE3;color:#0A5A36;padding:10px 12px;border-radius:10px;margin-bottom:12px}
+.tabs{display:flex;gap:8px;margin-bottom:16px}
+.tabs button{min-height:46px;padding:0 20px;border-radius:12px;border:2px solid #B8C2B9;background:#fff;font:700 15px 'DM Sans',sans-serif;cursor:pointer;color:var(--ink)}
+.tabs button[aria-pressed=true]{background:var(--ink);color:#fff;border-color:var(--ink)}
 .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:16px}
 .stat{background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px}
 .stat b{display:block;font:800 26px 'Bricolage Grotesque',sans-serif}
@@ -33,7 +40,18 @@ input,select{min-height:46px;padding:0 12px;border:1px solid #B8C2B9;border-radi
 .items li{display:flex;justify-content:space-between;gap:10px;padding:4px 0;border-bottom:1px dashed var(--line)}
 .meta{color:var(--muted);font-size:15px}
 .row{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:10px}
+.row select{width:auto}
 a.wa{color:#0A5A36;font-weight:700}
+.prod{display:flex;gap:14px;align-items:center;background:#fff;border:1px solid var(--line);border-radius:16px;padding:12px;margin-bottom:12px;flex-wrap:wrap}
+.prod .th{width:72px;height:72px;border-radius:12px;background:#EDF1EA;object-fit:cover;flex:none;display:flex;align-items:center;justify-content:center;font-size:12px;color:#52605A;text-align:center}
+.prod .info{flex:1 1 200px;min-width:0}
+.prod .acts{display:flex;gap:8px;flex-wrap:wrap}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:0 14px}
+.photos{display:flex;flex-wrap:wrap;gap:10px;margin:8px 0 14px}
+.photo{position:relative;width:96px;height:96px}
+.photo img{width:100%;height:100%;object-fit:cover;border-radius:12px;border:1px solid var(--line)}
+.photo button{position:absolute;top:-8px;right:-8px;width:32px;height:32px;border-radius:50%;border:0;background:#8A1C14;color:#fff;font:700 16px 'DM Sans',sans-serif;cursor:pointer}
+.hint{font-size:14px;color:var(--muted);margin-top:-8px;margin-bottom:12px}
 [hidden]{display:none!important}
 </style>
 </head>
@@ -51,13 +69,20 @@ a.wa{color:#0A5A36;font-weight:700}
 
 <div id="app" hidden>
 <div class="top">
-<h1 style="font-size:30px">Commandes</h1>
+<h1 style="font-size:30px">Espace vendeur</h1>
 <div class="row" style="margin:0">
 <button class="btn ghost" id="refresh" type="button">Actualiser</button>
 <button class="btn ghost" id="logout" type="button">Se déconnecter</button>
 </div>
 </div>
+<div class="tabs" id="tabs">
+<button type="button" data-t="orders" aria-pressed="true">Commandes</button>
+<button type="button" data-t="products" aria-pressed="false">Produits</button>
+</div>
 <div class="err" id="appErr" role="alert" hidden></div>
+<div class="okmsg" id="appOk" role="status" hidden></div>
+
+<div id="ordersView">
 <div class="stats">
 <div class="stat"><span>Nouvelles</span><b id="sNew">0</b></div>
 <div class="stat"><span>Commandes du jour</span><b id="sToday">0</b></div>
@@ -66,16 +91,50 @@ a.wa{color:#0A5A36;font-weight:700}
 <div class="filters" id="filters"></div>
 <div id="list"></div>
 </div>
+
+<div id="productsView" hidden>
+<div class="row" style="margin:0 0 16px"><button class="btn green" id="addProduct" type="button">+ Ajouter un produit</button></div>
+
+<form class="panel" id="pForm" hidden novalidate style="margin-bottom:20px">
+<h2 style="font-size:24px;margin-bottom:14px" id="pTitle">Nouveau produit</h2>
+<label>Nom du produit<input id="pName" type="text" maxlength="100"></label>
+<label>Catégorie<input id="pCat" type="text" maxlength="60" list="cats"></label>
+<datalist id="cats"></datalist>
+<div class="grid2">
+<label>Prix au détail (GNF)<input id="pDetail" type="number" inputmode="numeric" min="0" step="1"></label>
+<label>Prix en gros, à l'unité (GNF)<input id="pGros" type="number" inputmode="numeric" min="0" step="1"></label>
+<label>Gros à partir de (pièces)<input id="pMin" type="number" inputmode="numeric" min="1" step="1" value="6"></label>
+<label>Ordre d'affichage<input id="pSort" type="number" inputmode="numeric" step="1" value="0"></label>
+</div>
+<span style="font-weight:500">Photos (au moins 2, maximum 6)</span>
+<div class="photos" id="pPhotos"></div>
+<label style="margin-top:0"><input id="pFiles" type="file" accept="image/*" multiple></label>
+<p class="hint" id="pHint">Les photos sont réduites automatiquement pour charger vite, même avec une connexion lente.</p>
+<div class="err" id="pErr" role="alert" hidden></div>
+<div class="row">
+<button class="btn green" id="pSave" type="submit">Enregistrer le produit</button>
+<button class="btn ghost" id="pCancel" type="button">Annuler</button>
+</div>
+</form>
+
+<div id="pList"></div>
+</div>
+</div>
 </div>
 
 <script>
 const SB = 'https://rwkyftmghpyeupzolvmc.supabase.co';
 const KEY = 'sb_publishable_VXZU_nR9UGwAM6gJTlgVQg_4-k9hRNB';
+const BUCKET = 'product-images';
+const MAX_PHOTOS = 6;
 const $ = (id) => document.getElementById(id);
 const gnf = (n) => Number(n).toLocaleString('fr-FR') + ' GNF';
+const imgUrl = (path) => SB + '/storage/v1/object/public/' + BUCKET + '/' + String(path).split('/').map(encodeURIComponent).join('/');
 const labels = { nouvelle: 'Nouvelle', confirmee: 'Confirmée', livree: 'Livrée', annulee: 'Annulée' };
 const payNames = { cash: 'À la livraison', orange: 'Orange Money', mtn: 'MTN Mobile Money' };
-let token = null, orders = [], filter = 'toutes', timer = null;
+let token = null, orders = [], products = [], filter = 'toutes', timer = null, tab = 'orders';
+// Formulaire produit : editing = produit modifié (ou null si nouveau) ; photos = [{path, isNew}] ; removed = chemins à supprimer à l'enregistrement
+let editing = null, photos = [], removed = [], photosTouched = false, busy = false;
 
 function h(tag, props, ...kids) {
   const e = document.createElement(tag);
@@ -88,6 +147,14 @@ function h(tag, props, ...kids) {
   return e;
 }
 
+function note(msg, ok) {
+  const e = $('appErr'), o = $('appOk');
+  e.hidden = true; o.hidden = true;
+  if (!msg) return;
+  const t = ok ? o : e; t.textContent = msg; t.hidden = false;
+  if (ok) setTimeout(() => { o.hidden = true; }, 4000);
+}
+
 async function api(path, opts) {
   const headers = { apikey: KEY, 'Content-Type': 'application/json', ...(opts && opts.headers) };
   if (token) headers.Authorization = 'Bearer ' + token;
@@ -98,6 +165,7 @@ async function api(path, opts) {
   return data;
 }
 
+// ---------- Connexion ----------
 $('loginForm').addEventListener('submit', async (ev) => {
   ev.preventDefault(); $('loginErr').hidden = true;
   try {
@@ -113,10 +181,10 @@ $('loginForm').addEventListener('submit', async (ev) => {
 
 async function enter() {
   const ok = await api('/rest/v1/rpc/is_admin', { method: 'POST', body: '{}' });
-  if (ok !== true) { logout(); $('loginErr').textContent = "Ce compte n'est pas autorisé à gérer les commandes."; $('loginErr').hidden = false; return; }
+  if (ok !== true) { logout(); $('loginErr').textContent = "Ce compte n'est pas autorisé à gérer la boutique."; $('loginErr').hidden = false; return; }
   $('login').hidden = true; $('app').hidden = false;
-  await load();
-  clearInterval(timer); timer = setInterval(load, 30000);
+  await loadOrders();
+  clearInterval(timer); timer = setInterval(() => { if (tab === 'orders') loadOrders(); }, 30000);
 }
 
 function logout() {
@@ -125,38 +193,47 @@ function logout() {
   $('app').hidden = true; $('login').hidden = false; $('password').value = '';
 }
 $('logout').addEventListener('click', logout);
-$('refresh').addEventListener('click', load);
+$('refresh').addEventListener('click', () => { if (tab === 'orders') loadOrders(); else loadProducts(); });
 
-async function load() {
+$('tabs').addEventListener('click', (ev) => {
+  const b = ev.target.closest('button'); if (!b) return;
+  tab = b.dataset.t; note('');
+  $('tabs').querySelectorAll('button').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+  $('ordersView').hidden = tab !== 'orders';
+  $('productsView').hidden = tab !== 'products';
+  if (tab === 'products') loadProducts();
+});
+
+// ---------- Commandes ----------
+async function loadOrders() {
   try {
     orders = await api('/rest/v1/orders?select=*,order_items(*)&order=created_at.desc&limit=200');
-    $('appErr').hidden = true;
-    render();
-  } catch (e) { $('appErr').textContent = e.message; $('appErr').hidden = false; }
+    note(''); renderOrders();
+  } catch (e) { note(e.message); }
 }
 
 async function setStatus(o, status) {
   try {
     await api('/rest/v1/orders?id=eq.' + encodeURIComponent(o.id), { method: 'PATCH', headers: { Prefer: 'return=minimal' }, body: JSON.stringify({ status }) });
-    o.status = status; render();
-  } catch (e) { $('appErr').textContent = e.message; $('appErr').hidden = false; }
+    o.status = status; renderOrders();
+  } catch (e) { note(e.message); }
 }
 
-function render() {
+function renderOrders() {
   const todayKey = new Date().toDateString();
   const today = orders.filter((o) => new Date(o.created_at).toDateString() === todayKey);
   $('sNew').textContent = orders.filter((o) => o.status === 'nouvelle').length;
   $('sToday').textContent = today.length;
   $('sSum').textContent = gnf(today.filter((o) => o.status !== 'annulee').reduce((a, o) => a + o.total, 0));
   const keys = ['toutes', 'nouvelle', 'confirmee', 'livree', 'annulee'];
-  $('filters').replaceChildren(...keys.map((k) => h('button', { type: 'button', 'aria-pressed': String(filter === k), onclick: () => { filter = k; render(); } },
+  $('filters').replaceChildren(...keys.map((k) => h('button', { type: 'button', 'aria-pressed': String(filter === k), onclick: () => { filter = k; renderOrders(); } },
     (k === 'toutes' ? 'Toutes' : labels[k]) + ' (' + (k === 'toutes' ? orders.length : orders.filter((o) => o.status === k).length) + ')')));
   const shown = orders.filter((o) => filter === 'toutes' || o.status === filter);
   if (!shown.length) { $('list').replaceChildren(h('p', { class: 'meta' }, 'Aucune commande pour le moment.')); return; }
-  $('list').replaceChildren(...shown.map(card));
+  $('list').replaceChildren(...shown.map(orderCard));
 }
 
-function card(o) {
+function orderCard(o) {
   const digits = o.phone.replace(/\D/g, '');
   const when = new Date(o.created_at).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' });
   const sel = h('select', { 'aria-label': 'Statut de la commande ' + o.number, onchange: (ev) => setStatus(o, ev.target.value) },
@@ -171,6 +248,156 @@ function card(o) {
     h('div', { class: 'row' }, h('strong', { style: 'font-size:20px' }, 'Total : ' + gnf(o.total)), sel)
   );
 }
+
+// ---------- Produits ----------
+async function loadProducts() {
+  try {
+    products = await api('/rest/v1/products?select=*&order=sort.asc,name.asc');
+    note(''); renderProducts();
+  } catch (e) { note(e.message); }
+}
+
+function renderProducts() {
+  $('cats').replaceChildren(...Array.from(new Set(products.map((p) => p.category))).map((c) => h('option', { value: c })));
+  if (!products.length) { $('pList').replaceChildren(h('p', { class: 'meta' }, 'Aucun produit pour le moment.')); return; }
+  $('pList').replaceChildren(...products.map((p) => {
+    const first = (p.images || [])[0];
+    const th = first ? h('img', { class: 'th', src: imgUrl(first), alt: '' }) : h('div', { class: 'th' }, 'Sans photo');
+    return h('div', { class: 'prod' }, th,
+      h('div', { class: 'info' },
+        h('strong', {}, p.name), ' ', p.active ? '' : h('span', { class: 'badge s-annulee' }, 'Masqué'),
+        h('div', { class: 'meta' }, p.category + ' · ' + (p.images || []).length + ' photo(s)'),
+        h('div', { class: 'meta' }, 'Détail ' + gnf(p.price_detail) + ' · Gros ' + gnf(p.price_gros) + ' dès ' + p.min_gros)),
+      h('div', { class: 'acts' },
+        h('button', { class: 'btn ghost', type: 'button', onclick: () => openForm(p) }, 'Modifier'),
+        h('button', { class: 'btn ghost', type: 'button', onclick: () => toggleActive(p) }, p.active ? 'Masquer' : 'Afficher')));
+  }));
+}
+
+async function toggleActive(p) {
+  try {
+    await api('/rest/v1/products?id=eq.' + encodeURIComponent(p.id), { method: 'PATCH', headers: { Prefer: 'return=minimal' }, body: JSON.stringify({ active: !p.active }) });
+    p.active = !p.active; renderProducts();
+    note(p.active ? 'Produit affiché sur la boutique.' : 'Produit masqué de la boutique.', true);
+  } catch (e) { note(e.message); }
+}
+
+function pErr(msg) { const e = $('pErr'); e.textContent = msg; e.hidden = !msg; }
+
+function openForm(p) {
+  editing = p || null; photos = []; removed = []; photosTouched = false; pErr(''); note('');
+  $('pTitle').textContent = p ? 'Modifier le produit' : 'Nouveau produit';
+  $('pName').value = p ? p.name : '';
+  $('pCat').value = p ? p.category : '';
+  $('pDetail').value = p ? p.price_detail : '';
+  $('pGros').value = p ? p.price_gros : '';
+  $('pMin').value = p ? p.min_gros : 6;
+  $('pSort').value = p ? p.sort : 0;
+  $('pFiles').value = '';
+  if (p) photos = (p.images || []).map((path) => ({ path, isNew: false }));
+  renderPhotos();
+  $('pForm').hidden = false; $('pForm').scrollIntoView({ behavior: 'smooth' });
+}
+
+function renderPhotos() {
+  $('pPhotos').replaceChildren(...photos.map((ph, i) => h('div', { class: 'photo' },
+    h('img', { src: imgUrl(ph.path), alt: 'Photo ' + (i + 1) }),
+    h('button', { type: 'button', 'aria-label': 'Retirer la photo ' + (i + 1), onclick: () => removePhoto(i) }, '×'))));
+  $('pHint').textContent = photos.length + ' photo(s) sur ' + MAX_PHOTOS + '. Les photos sont réduites automatiquement pour charger vite, même avec une connexion lente.';
+}
+
+async function deleteObject(path) {
+  try { await fetch(SB + '/storage/v1/object/' + BUCKET + '/' + path.split('/').map(encodeURIComponent).join('/'), { method: 'DELETE', headers: { apikey: KEY, Authorization: 'Bearer ' + token } }); } catch (e) {}
+}
+
+function removePhoto(i) {
+  const ph = photos.splice(i, 1)[0];
+  photosTouched = true;
+  if (ph.isNew) deleteObject(ph.path); else removed.push(ph.path);
+  renderPhotos();
+}
+
+async function resizeImage(file, max) {
+  const bmp = await createImageBitmap(file);
+  const s = Math.min(1, max / Math.max(bmp.width, bmp.height));
+  const c = document.createElement('canvas');
+  c.width = Math.max(1, Math.round(bmp.width * s)); c.height = Math.max(1, Math.round(bmp.height * s));
+  c.getContext('2d').drawImage(bmp, 0, 0, c.width, c.height);
+  return new Promise((res, rej) => c.toBlob((b) => (b ? res(b) : rej(new Error('Image illisible'))), 'image/jpeg', 0.82));
+}
+
+async function uploadImage(file) {
+  const blob = await resizeImage(file, 1200);
+  const path = Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8) + '.jpg';
+  const r = await fetch(SB + '/storage/v1/object/' + BUCKET + '/' + path, {
+    method: 'POST',
+    headers: { apikey: KEY, Authorization: 'Bearer ' + token, 'Content-Type': 'image/jpeg', 'cache-control': 'max-age=31536000' },
+    body: blob
+  });
+  if (r.status === 401) { logout(); throw new Error('Session expirée, reconnectez-vous.'); }
+  if (!r.ok) { const d = await r.json().catch(() => null); throw new Error((d && (d.message || d.error)) || "Échec de l'envoi de la photo"); }
+  return path;
+}
+
+$('pFiles').addEventListener('change', async (ev) => {
+  const files = Array.from(ev.target.files || []);
+  ev.target.value = '';
+  if (!files.length) return;
+  pErr('');
+  const room = MAX_PHOTOS - photos.length;
+  if (files.length > room) pErr('Maximum ' + MAX_PHOTOS + ' photos : seules les ' + room + ' premières seront ajoutées.');
+  busy = true; $('pSave').disabled = true;
+  for (const f of files.slice(0, Math.max(room, 0))) {
+    $('pHint').textContent = 'Envoi de la photo en cours…';
+    try { photos.push({ path: await uploadImage(f), isNew: true }); photosTouched = true; renderPhotos(); }
+    catch (e) { pErr('Photo refusée : ' + (e.message || 'erreur') + ' (utilisez une photo JPG, PNG ou WebP)'); }
+  }
+  busy = false; $('pSave').disabled = false; renderPhotos();
+});
+
+$('addProduct').addEventListener('click', () => openForm(null));
+
+$('pCancel').addEventListener('click', () => {
+  photos.filter((p) => p.isNew).forEach((p) => deleteObject(p.path));
+  $('pForm').hidden = true; editing = null; photos = []; removed = [];
+});
+
+function slug(s) {
+  return s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 30) || 'produit';
+}
+
+$('pForm').addEventListener('submit', async (ev) => {
+  ev.preventDefault(); pErr('');
+  if (busy) return pErr("Attendez la fin de l'envoi des photos.");
+  const name = $('pName').value.trim(), category = $('pCat').value.trim();
+  const detail = Number($('pDetail').value), gros = Number($('pGros').value), min = Number($('pMin').value), sort = Number($('pSort').value || 0);
+  if (name.length < 2) return pErr('Indiquez le nom du produit.');
+  if (category.length < 2) return pErr('Indiquez la catégorie.');
+  if (!Number.isInteger(detail) || detail < 0 || $('pDetail').value === '') return pErr('Indiquez le prix au détail (nombre entier).');
+  if (!Number.isInteger(gros) || gros < 0 || $('pGros').value === '') return pErr('Indiquez le prix en gros (nombre entier).');
+  if (!Number.isInteger(min) || min < 1) return pErr('Indiquez à partir de combien de pièces le prix gros s\'applique (1 ou plus).');
+  if (!Number.isInteger(sort)) return pErr("L'ordre d'affichage doit être un nombre entier.");
+  if ((!editing || photosTouched) && photos.length < 2) return pErr('Ajoutez au moins 2 photos.');
+  const body = { name, category, price_detail: detail, price_gros: gros, min_gros: min, sort, images: photos.map((p) => p.path) };
+  const btn = $('pSave'); btn.disabled = true; btn.textContent = 'Enregistrement…';
+  try {
+    if (editing) {
+      await api('/rest/v1/products?id=eq.' + encodeURIComponent(editing.id), { method: 'PATCH', headers: { Prefer: 'return=minimal' }, body: JSON.stringify(body) });
+    } else {
+      body.id = slug(name) + '-' + Math.random().toString(36).slice(2, 6);
+      body.active = true;
+      await api('/rest/v1/products', { method: 'POST', headers: { Prefer: 'return=minimal' }, body: JSON.stringify(body) });
+    }
+    removed.forEach(deleteObject);
+    $('pForm').hidden = true; photos = []; removed = []; editing = null;
+    await loadProducts();
+    note('Produit enregistré. Il est visible sur la boutique après rechargement de la page.', true);
+  } catch (e) {
+    pErr('Enregistrement impossible : ' + e.message);
+  } finally {
+    btn.disabled = false; btn.textContent = 'Enregistrer le produit';
+  }
+});
 
 try { const t = sessionStorage.getItem('tk'); if (t) { token = t; enter().catch(() => logout()); } } catch (e) {}
 </script>
