@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0F7A4A">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Hérico">
+<title>Suivre ma commande</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@700;800&family=DM+Sans:wght@400;500;700&display=swap">
+<style>
+:root{--ink:#14201A;--muted:#3F4D46;--line:#DDE3DC;--bg:#F6F7F4;--accent:#0F7A4A;--accent-dark:#0A5A36;--danger:#8A1C14}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 17px/1.5 'DM Sans',system-ui,sans-serif}
+.wrap{max-width:560px;margin:0 auto;padding:0 20px}
+header{background:#fff;border-bottom:1px solid var(--line)}
+header .wrap{display:flex;justify-content:space-between;align-items:center;min-height:64px}
+.brand{font:800 20px 'Bricolage Grotesque','DM Sans',sans-serif}
+a.back{color:var(--accent-dark);font-weight:700;text-decoration:none;min-height:44px;display:inline-flex;align-items:center}
+h1{font:800 clamp(28px,7vw,38px)/1.1 'Bricolage Grotesque','DM Sans',sans-serif;margin:32px 0 8px}
+.sub{color:var(--muted);margin:0 0 20px}
+form{display:flex;flex-direction:column;gap:14px;background:#fff;border:1px solid var(--line);border-radius:18px;padding:20px}
+label{display:flex;flex-direction:column;gap:6px;font-weight:700;font-size:15px}
+input{font:inherit;font-weight:400;min-height:48px;padding:12px 14px;border:1px solid #B9C4BC;border-radius:12px;color:var(--ink)}
+input:focus-visible,button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+button{font:700 17px 'DM Sans',sans-serif;min-height:52px;border:0;border-radius:999px;background:var(--accent-dark);color:#fff;cursor:pointer}
+button:disabled{opacity:.6}
+.err{color:var(--danger);font-weight:700;margin:0}
+.res{margin-top:24px;background:#fff;border:1px solid var(--line);border-radius:18px;padding:20px}
+.res h2{margin:0 0 4px;font:800 24px 'Bricolage Grotesque','DM Sans',sans-serif}
+.meta{color:var(--muted);font-size:15px}
+.steps{list-style:none;margin:20px 0;padding:0;display:flex;flex-direction:column;gap:0}
+.steps li{display:flex;gap:14px;align-items:flex-start;position:relative;padding-bottom:20px}
+.steps li:last-child{padding-bottom:0}
+.steps li:not(:last-child)::before{content:"";position:absolute;left:13px;top:28px;bottom:0;width:2px;background:var(--line)}
+.steps li.done:not(:last-child)::before{background:var(--accent)}
+.dot{flex:none;width:28px;height:28px;border-radius:50%;border:2px solid var(--line);background:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#fff}
+.steps li.done .dot{background:var(--accent);border-color:var(--accent)}
+.steps li.now .dot{background:var(--accent);border-color:var(--accent);box-shadow:0 0 0 4px #D6EBDF}
+.steps li:not(.done):not(.now){color:#52605A}
+.steps strong{display:block}
+.cancel{background:#F7D9D3;border-radius:12px;padding:12px 14px;font-weight:700;margin:16px 0}
+table{width:100%;border-collapse:collapse;font-size:16px}
+td{padding:6px 0;border-top:1px solid var(--line)}
+td:last-child{text-align:right;white-space:nowrap}
+tr.tot td{font-weight:700}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<header><div class="wrap"><span class="brand" id="brand"></span><a class="back" href="index.html">← Boutique</a></div></header>
+<main class="wrap">
+<h1>Suivre ma commande</h1>
+<p class="sub">Entrez le numéro reçu après votre commande et le téléphone utilisé pour la passer.</p>
+<form id="f" novalidate>
+<label>Numéro de commande<input id="n" placeholder="CMD-001" autocomplete="off" autocapitalize="characters" maxlength="20"></label>
+<label>Téléphone de la commande<input id="p" type="tel" inputmode="tel" placeholder="Votre numéro" autocomplete="tel" maxlength="30"></label>
+<p class="err" id="err" role="alert" hidden></p>
+<button type="submit" id="go">Voir ma commande</button>
+</form>
+<div class="res" id="res" hidden></div>
+</main>
+<script src="config.js"></script>
+<script>
+const SB = 'https://rwkyftmghpyeupzolvmc.supabase.co';
+const KEY = 'sb_publishable_VXZU_nR9UGwAM6gJTlgVQg_4-k9hRNB'; // clé publique : protégée par les règles de la base
+const CFG = window.SHOP || { name: 'Boutique', whatsapp: '' };
+const WA = String(CFG.whatsapp || '').replace(/\D/g, '');
+const $ = (id) => document.getElementById(id);
+const gnf = (n) => Number(n).toLocaleString('fr-FR') + ' GNF';
+$('brand').textContent = CFG.name; document.title = 'Suivre ma commande, ' + CFG.name;
+
+function h(tag, props, ...kids) {
+  const e = document.createElement(tag);
+  Object.entries(props || {}).forEach(([k, v]) => { if (k === 'class') e.className = v; else e.setAttribute(k, v); });
+  kids.forEach((c) => e.append(c));
+  return e;
+}
+const STEPS = [
+  ['nouvelle', 'Commande reçue', 'Nous avons bien reçu votre commande.'],
+  ['confirmee', 'Commande confirmée', 'La boutique prépare votre commande et organise la livraison.'],
+  ['livree', 'Commande livrée', 'Votre commande a été livrée. Merci de votre confiance !']
+];
+function show(o) {
+  const res = $('res');
+  const idx = STEPS.findIndex((s) => s[0] === o.status);
+  const d = new Date(o.created_at);
+  const kids = [
+    h('h2', {}, o.number),
+    h('div', { class: 'meta' }, 'Passée le ' + d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }) + ' · Livraison à ' + o.commune)
+  ];
+  if (o.status === 'annulee') {
+    kids.push(h('div', { class: 'cancel' }, 'Cette commande a été annulée. Contactez la boutique si vous avez une question.'));
+  } else {
+    kids.push(h('ol', { class: 'steps' }, ...STEPS.map((s, i) =>
+      h('li', { class: i < idx ? 'done' : i === idx ? (idx === STEPS.length - 1 ? 'done now' : 'now') : '' },
+        h('span', { class: 'dot', 'aria-hidden': 'true' }, i <= idx ? '✓' : ''),
+        h('div', {}, h('strong', {}, s[1]), i === idx ? s[2] : '')))));
+  }
+  const rows = o.items.map((it) => h('tr', {}, h('td', {}, it.qty + ' × ' + it.name), h('td', {}, gnf(it.line_total))));
+  rows.push(h('tr', {}, h('td', {}, 'Livraison'), h('td', {}, gnf(o.delivery_fee))));
+  rows.push(h('tr', { class: 'tot' }, h('td', {}, 'Total'), h('td', {}, gnf(o.total))));
+  kids.push(h('table', {}, h('tbody', {}, ...rows)));
+  if (WA) {
+    const a = h('a', { class: 'back', href: 'https://wa.me/' + WA + '?text=' + encodeURIComponent('Bonjour, je souhaite avoir des nouvelles de ma commande ' + o.number + '.'), target: '_blank', rel: 'noopener' }, 'Écrire à la boutique sur WhatsApp');
+    kids.push(h('div', { style: 'margin-top:16px' }, a));
+  }
+  res.replaceChildren(...kids); res.hidden = false;
+}
+$('f').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const err = $('err'), btn = $('go'); err.hidden = true; $('res').hidden = true;
+  const n = $('n').value.trim(), p = $('p').value.trim();
+  if (n.length < 4) { err.textContent = 'Indiquez le numéro de commande, par exemple CMD-001.'; err.hidden = false; return; }
+  if (p.replace(/\D/g, '').length < 8) { err.textContent = 'Indiquez le téléphone utilisé pour la commande.'; err.hidden = false; return; }
+  btn.disabled = true; btn.textContent = 'Recherche…';
+  try {
+    const r = await fetch(SB + '/rest/v1/rpc/track_order', { method: 'POST', headers: { apikey: KEY, 'Content-Type': 'application/json' }, body: JSON.stringify({ p_number: n, p_phone: p }) });
+    if (!r.ok) throw new Error('réseau');
+    const o = await r.json();
+    if (!o) { err.textContent = 'Aucune commande trouvée. Vérifiez le numéro et le téléphone.'; err.hidden = false; }
+    else show(o);
+  } catch (x) { err.textContent = 'Impossible de contacter la boutique. Vérifiez votre connexion et réessayez.'; err.hidden = false; }
+  finally { btn.disabled = false; btn.textContent = 'Voir ma commande'; }
+});
+</script>
+</body>
+</html>

@@ -19,7 +19,8 @@ h1,h2,h3{font-family:'Bricolage Grotesque',sans-serif;margin:0}
 .btn:disabled{opacity:.6;cursor:wait}
 .panel{background:#fff;border:1px solid var(--line);border-radius:16px;padding:20px}
 label{display:flex;flex-direction:column;gap:6px;font-weight:500;margin-bottom:14px}
-input,select{min-height:46px;padding:0 12px;border:1px solid #B8C2B9;border-radius:10px;font:400 16px 'DM Sans',sans-serif;background:#fff;color:var(--ink);width:100%}
+input,select,textarea{min-height:46px;padding:0 12px;border:1px solid #B8C2B9;border-radius:10px;font:400 16px 'DM Sans',sans-serif;background:#fff;color:var(--ink);width:100%}
+textarea{padding:10px 12px;min-height:110px;resize:vertical;line-height:1.4}
 input[type=file]{padding:10px 12px;height:auto}
 .err{background:#FBE3E0;color:#8A1C14;padding:10px 12px;border-radius:10px;margin-bottom:12px}
 .okmsg{background:#DCEFE3;color:#0A5A36;padding:10px 12px;border-radius:10px;margin-bottom:12px}
@@ -100,6 +101,8 @@ a.wa{color:#0A5A36;font-weight:700}
 <label>Nom du produit<input id="pName" type="text" maxlength="100"></label>
 <label>Catégorie<input id="pCat" type="text" maxlength="60" list="cats"></label>
 <datalist id="cats"></datalist>
+<label>Description du produit (facultatif)<textarea id="pDesc" maxlength="600" placeholder="Matière, taille, couleur, garantie, points forts…"></textarea></label>
+<p class="hint" id="pDescCount">0 / 600 caractères</p>
 <div class="grid2">
 <label>Prix au détail (GNF)<input id="pDetail" type="number" inputmode="numeric" min="0" step="1"></label>
 <label>Prix en gros, à l'unité (GNF)<input id="pGros" type="number" inputmode="numeric" min="0" step="1"></label>
@@ -265,13 +268,24 @@ function renderProducts() {
     const th = first ? h('img', { class: 'th', src: imgUrl(first), alt: '' }) : h('div', { class: 'th' }, 'Sans photo');
     return h('div', { class: 'prod' }, th,
       h('div', { class: 'info' },
-        h('strong', {}, p.name), ' ', p.active ? '' : h('span', { class: 'badge s-annulee' }, 'Masqué'),
+        h('strong', {}, p.name), ' ', p.active ? '' : h('span', { class: 'badge s-annulee' }, 'Masqué'), p.in_stock === false ? h('span', { class: 'badge s-annulee' }, 'En rupture') : '',
         h('div', { class: 'meta' }, p.category + ' · ' + (p.images || []).length + ' photo(s)'),
+        p.description ? h('div', { class: 'meta' }, p.description.length > 80 ? p.description.slice(0, 80) + '…' : p.description) : '',
         h('div', { class: 'meta' }, 'Détail ' + gnf(p.price_detail) + ' · Gros ' + gnf(p.price_gros) + ' dès ' + p.min_gros)),
       h('div', { class: 'acts' },
         h('button', { class: 'btn ghost', type: 'button', onclick: () => openForm(p) }, 'Modifier'),
+        h('button', { class: 'btn ghost', type: 'button', onclick: () => toggleStock(p) }, p.in_stock === false ? 'Remettre en stock' : 'Mettre en rupture'),
         h('button', { class: 'btn ghost', type: 'button', onclick: () => toggleActive(p) }, p.active ? 'Masquer' : 'Afficher')));
   }));
+}
+
+async function toggleStock(p) {
+  try {
+    const next = p.in_stock === false;
+    await api('/rest/v1/products?id=eq.' + encodeURIComponent(p.id), { method: 'PATCH', headers: { Prefer: 'return=minimal' }, body: JSON.stringify({ in_stock: next }) });
+    p.in_stock = next; renderProducts();
+    note(next ? 'Produit de nouveau disponible.' : 'Produit marqué en rupture : les clients ne peuvent plus le commander.', true);
+  } catch (e) { note(e.message); }
 }
 
 async function toggleActive(p) {
@@ -282,6 +296,9 @@ async function toggleActive(p) {
   } catch (e) { note(e.message); }
 }
 
+function descCount() { $('pDescCount').textContent = $('pDesc').value.length + ' / 600 caractères'; }
+$('pDesc').addEventListener('input', descCount);
+
 function pErr(msg) { const e = $('pErr'); e.textContent = msg; e.hidden = !msg; }
 
 function openForm(p) {
@@ -289,6 +306,8 @@ function openForm(p) {
   $('pTitle').textContent = p ? 'Modifier le produit' : 'Nouveau produit';
   $('pName').value = p ? p.name : '';
   $('pCat').value = p ? p.category : '';
+  $('pDesc').value = p && p.description ? p.description : '';
+  descCount();
   $('pDetail').value = p ? p.price_detail : '';
   $('pGros').value = p ? p.price_gros : '';
   $('pMin').value = p ? p.min_gros : 6;
@@ -370,6 +389,8 @@ $('pForm').addEventListener('submit', async (ev) => {
   ev.preventDefault(); pErr('');
   if (busy) return pErr("Attendez la fin de l'envoi des photos.");
   const name = $('pName').value.trim(), category = $('pCat').value.trim();
+  const desc = $('pDesc').value.trim();
+  if (desc.length > 600) return pErr('La description est trop longue (600 caractères maximum).');
   const detail = Number($('pDetail').value), gros = Number($('pGros').value), min = Number($('pMin').value), sort = Number($('pSort').value || 0);
   if (name.length < 2) return pErr('Indiquez le nom du produit.');
   if (category.length < 2) return pErr('Indiquez la catégorie.');
@@ -378,7 +399,7 @@ $('pForm').addEventListener('submit', async (ev) => {
   if (!Number.isInteger(min) || min < 1) return pErr('Indiquez à partir de combien de pièces le prix gros s\'applique (1 ou plus).');
   if (!Number.isInteger(sort)) return pErr("L'ordre d'affichage doit être un nombre entier.");
   if ((!editing || photosTouched) && photos.length < 2) return pErr('Ajoutez au moins 2 photos.');
-  const body = { name, category, price_detail: detail, price_gros: gros, min_gros: min, sort, images: photos.map((p) => p.path) };
+  const body = { name, category, description: desc || null, price_detail: detail, price_gros: gros, min_gros: min, sort, images: photos.map((p) => p.path) };
   const btn = $('pSave'); btn.disabled = true; btn.textContent = 'Enregistrement…';
   try {
     if (editing) {
