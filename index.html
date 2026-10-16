@@ -52,7 +52,27 @@ section h2{font-size:32px;margin-bottom:18px}
 .gal{position:relative;height:190px;background:#EDF1EA}
 .gal .strip{display:flex;height:100%;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none}
 .gal .strip::-webkit-scrollbar{display:none}
-.gal img{flex:0 0 100%;width:100%;height:100%;object-fit:cover;scroll-snap-align:center}
+.gal img{flex:0 0 100%;width:100%;height:100%;object-fit:cover;scroll-snap-align:center;cursor:zoom-in}
+.gal img:focus-visible{outline:3px solid var(--accent);outline-offset:-3px}
+.zoomtag{position:absolute;top:8px;right:8px;background:rgba(20,32,26,.75);color:#fff;font-size:13px;font-weight:700;padding:3px 10px;border-radius:999px;pointer-events:none}
+.lb{position:fixed;inset:0;z-index:90;background:#0A100D;display:flex;flex-direction:column;color:#fff}
+.lb-top{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;gap:12px}
+.lb-title{font-weight:700;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lb-count{font-size:15px;opacity:.85;flex:none}
+.lb-x{flex:none;width:48px;height:48px;border-radius:50%;border:0;background:rgba(255,255,255,.16);color:#fff;font-size:26px;cursor:pointer}
+.lb-main{position:relative;flex:1;min-height:0}
+.lb-strip{display:flex;height:100%;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none}
+.lb-strip::-webkit-scrollbar{display:none}
+.lb-strip div{flex:0 0 100%;height:100%;scroll-snap-align:center;display:flex;align-items:center;justify-content:center;padding:0 8px}
+.lb-strip img{max-width:100%;max-height:100%;object-fit:contain;border-radius:8px}
+.lb-nav{position:absolute;top:50%;transform:translateY(-50%);width:48px;height:48px;border-radius:50%;border:0;background:rgba(255,255,255,.2);color:#fff;font-size:26px;cursor:pointer}
+.lb-nav.prev{left:8px}.lb-nav.next{right:8px}
+.lb-nav:disabled{opacity:.25;cursor:default}
+.lb-thumbs{display:flex;gap:8px;padding:10px 14px 16px;overflow-x:auto;justify-content:center}
+.lb-thumbs button{flex:none;width:56px;height:56px;padding:0;border:2px solid transparent;border-radius:8px;overflow:hidden;background:none;cursor:pointer;opacity:.6}
+.lb-thumbs button[aria-current=true]{border-color:#fff;opacity:1}
+.lb-thumbs img{width:100%;height:100%;object-fit:cover;display:block}
+.lb button:focus-visible{outline:3px solid #fff;outline-offset:2px}
 .dots{position:absolute;bottom:8px;left:0;right:0;display:flex;justify-content:center;gap:6px;pointer-events:none}
 .dots i{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.6);box-shadow:0 0 2px rgba(0,0,0,.5)}
 .dots i.on{background:#fff}
@@ -246,11 +266,59 @@ function lines() {
   });
 }
 
+// ---- Visionneuse de photos ----
+let lbOpener = null;
+function openLightbox(p, start) {
+  const imgs = (p.images || []).slice();
+  if (!imgs.length || $('lb')) return;
+  lbOpener = document.activeElement;
+  const strip = h('div', { class: 'lb-strip' }, ...imgs.map((x, i) => h('div', {}, h('img', { src: imgUrl(x), alt: p.name + ', photo ' + (i + 1) }))));
+  const count = h('span', { class: 'lb-count', 'aria-live': 'polite' });
+  const prev = h('button', { class: 'lb-nav prev', type: 'button', 'aria-label': 'Photo précédente' }, '‹');
+  const next = h('button', { class: 'lb-nav next', type: 'button', 'aria-label': 'Photo suivante' }, '›');
+  const thumbs = h('div', { class: 'lb-thumbs' }, ...imgs.map((x, i) => h('button', { type: 'button', 'aria-label': 'Voir la photo ' + (i + 1), onclick: () => go(i) }, h('img', { src: imgUrl(x), alt: '' }))));
+  const close = h('button', { class: 'lb-x', type: 'button', 'aria-label': 'Fermer' }, '×');
+  const box = h('div', { class: 'lb', id: 'lb', role: 'dialog', 'aria-modal': 'true', 'aria-label': 'Photos de ' + p.name },
+    h('div', { class: 'lb-top' }, h('span', { class: 'lb-title' }, p.name), count, close),
+    h('div', { class: 'lb-main' }, strip, prev, next),
+    imgs.length > 1 ? thumbs : '');
+  let cur = 0;
+  const idx = () => Math.max(0, Math.min(imgs.length - 1, Math.round(strip.scrollLeft / (strip.clientWidth || 1))));
+  function sync() {
+    cur = idx(); count.textContent = (cur + 1) + ' / ' + imgs.length;
+    prev.disabled = cur === 0; next.disabled = cur === imgs.length - 1;
+    Array.from(thumbs.children).forEach((b, k) => { if (k === cur) b.setAttribute('aria-current', 'true'); else b.removeAttribute('aria-current'); });
+  }
+  function go(i) { strip.scrollTo({ left: i * strip.clientWidth, behavior: 'smooth' }); }
+  function shut() {
+    document.removeEventListener('keydown', onKey); box.remove(); document.body.classList.remove('locked');
+    if (lbOpener && lbOpener.focus) lbOpener.focus();
+  }
+  function onKey(ev) {
+    if (ev.key === 'Escape') shut();
+    else if (ev.key === 'ArrowRight') go(Math.min(imgs.length - 1, cur + 1));
+    else if (ev.key === 'ArrowLeft') go(Math.max(0, cur - 1));
+    else if (ev.key === 'Tab') {
+      const f = Array.from(box.querySelectorAll('button:not(:disabled)')); if (!f.length) return;
+      const first = f[0], last = f[f.length - 1];
+      if (ev.shiftKey && document.activeElement === first) { ev.preventDefault(); last.focus(); }
+      else if (!ev.shiftKey && document.activeElement === last) { ev.preventDefault(); first.focus(); }
+    }
+  }
+  strip.addEventListener('scroll', sync);
+  prev.addEventListener('click', () => go(cur - 1)); next.addEventListener('click', () => go(cur + 1));
+  close.addEventListener('click', shut);
+  document.addEventListener('keydown', onKey);
+  document.body.append(box); document.body.classList.add('locked');
+  strip.scrollLeft = start * strip.clientWidth; sync(); close.focus();
+}
+
 function gallery(p) {
   const imgs = Array.isArray(p.images) ? p.images : [];
   if (!imgs.length) return h('div', { class: 'ph' }, 'Photo du produit');
-  const strip = h('div', { class: 'strip' }, ...imgs.map((x, i) => h('img', { src: imgUrl(x), alt: p.name + ', photo ' + (i + 1), loading: 'lazy' })));
+  const strip = h('div', { class: 'strip' }, ...imgs.map((x, i) => h('img', { src: imgUrl(x), alt: p.name + ', photo ' + (i + 1) + '. Appuyez pour agrandir', loading: 'lazy', tabindex: '0', role: 'button', onclick: () => openLightbox(p, i), onkeydown: (ev) => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); openLightbox(p, i); } } })));
   const g = h('div', { class: 'gal' }, strip);
+  if (imgs.length > 1) g.append(h('span', { class: 'zoomtag' }, imgs.length + ' photos'));
   if (imgs.length > 1) {
     const dots = h('div', { class: 'dots' }, ...imgs.map((_, i) => h('i', { class: i === 0 ? 'on' : '' })));
     g.append(dots);

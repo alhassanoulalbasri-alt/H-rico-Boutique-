@@ -24,8 +24,8 @@ textarea{padding:10px 12px;min-height:110px;resize:vertical;line-height:1.4}
 input[type=file]{padding:10px 12px;height:auto}
 .err{background:#FBE3E0;color:#8A1C14;padding:10px 12px;border-radius:10px;margin-bottom:12px}
 .okmsg{background:#DCEFE3;color:#0A5A36;padding:10px 12px;border-radius:10px;margin-bottom:12px}
-.tabs{display:flex;gap:8px;margin-bottom:16px}
-.tabs button{min-height:46px;padding:0 20px;border-radius:12px;border:2px solid #B8C2B9;background:#fff;font:700 15px 'DM Sans',sans-serif;cursor:pointer;color:var(--ink)}
+.tabs{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}
+.tabs button{min-height:46px;padding:0 16px;border-radius:12px;border:2px solid #B8C2B9;background:#fff;font:700 15px 'DM Sans',sans-serif;cursor:pointer;color:var(--ink)}
 .tabs button[aria-pressed=true]{background:var(--ink);color:#fff;border-color:var(--ink)}
 .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:16px}
 .stat{background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px}
@@ -54,6 +54,24 @@ a.wa{color:#0A5A36;font-weight:700}
 .photo button{position:absolute;top:-8px;right:-8px;width:32px;height:32px;border-radius:50%;border:0;background:#8A1C14;color:#fff;font:700 16px 'DM Sans',sans-serif;cursor:pointer}
 .hint{font-size:14px;color:var(--muted);margin-top:-8px;margin-bottom:12px}
 [hidden]{display:none!important}
+.sgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:16px}
+.top-row{display:grid;grid-template-columns:1fr auto;gap:4px 12px;align-items:center;margin-bottom:12px}
+.top-row .bar{grid-column:1/-1;height:10px;border-radius:999px;background:#E8ECE6;overflow:hidden}
+.top-row .bar i{display:block;height:100%;background:var(--green,#0F7A4A);border-radius:999px}
+#ticket{display:none}
+@media print{
+  body.printing>*:not(#ticket){display:none!important}
+  body.printing #ticket{display:block;color:#000;background:#fff;font:14px/1.4 Arial,sans-serif;max-width:100%;padding:0}
+  #ticket h1{font:700 22px Arial,sans-serif;margin:0 0 2px}
+  #ticket .tk-no{font:700 20px Arial,sans-serif;margin:10px 0 2px}
+  #ticket hr{border:0;border-top:1px dashed #000;margin:10px 0}
+  #ticket table{width:100%;border-collapse:collapse}
+  #ticket td{padding:4px 0;vertical-align:top}
+  #ticket td:last-child{text-align:right;white-space:nowrap}
+  #ticket .tk-tot td{font-weight:700;font-size:17px;border-top:2px solid #000;padding-top:8px}
+  #ticket .tk-big{font:700 16px Arial,sans-serif}
+  @page{margin:10mm}
+}
 </style>
 </head>
 <body>
@@ -79,6 +97,7 @@ a.wa{color:#0A5A36;font-weight:700}
 <div class="tabs" id="tabs">
 <button type="button" data-t="orders" aria-pressed="true">Commandes</button>
 <button type="button" data-t="products" aria-pressed="false">Produits</button>
+<button type="button" data-t="stats" aria-pressed="false">Statistiques</button>
 </div>
 <div class="err" id="appErr" role="alert" hidden></div>
 <div class="okmsg" id="appOk" role="status" hidden></div>
@@ -91,6 +110,14 @@ a.wa{color:#0A5A36;font-weight:700}
 </div>
 <div class="filters" id="filters"></div>
 <div id="list"></div>
+</div>
+
+<div id="statsView" hidden>
+<div class="row" style="margin:0 0 16px"><label style="margin:0;max-width:260px">Période<select id="period">
+<option value="1">Aujourd'hui</option><option value="7">7 derniers jours</option><option value="30" selected>30 derniers jours</option><option value="0">Tout</option></select></label></div>
+<div class="sgrid" id="sStats"></div>
+<div class="panel"><h2 style="font-size:22px;margin-bottom:12px">Produits les plus commandés</h2><div id="topList"></div></div>
+<p class="meta" style="margin-top:12px" id="statsNote"></p>
 </div>
 
 <div id="productsView" hidden>
@@ -109,7 +136,7 @@ a.wa{color:#0A5A36;font-weight:700}
 <label>Gros à partir de (pièces)<input id="pMin" type="number" inputmode="numeric" min="1" step="1" value="6"></label>
 <label>Ordre d'affichage<input id="pSort" type="number" inputmode="numeric" step="1" value="0"></label>
 </div>
-<span style="font-weight:500">Photos (au moins 2, maximum 6)</span>
+<span style="font-weight:500">Photos (au moins 1, maximum 10)</span>
 <div class="photos" id="pPhotos"></div>
 <label style="margin-top:0"><input id="pFiles" type="file" accept="image/*" multiple></label>
 <p class="hint" id="pHint">Les photos sont réduites automatiquement pour charger vite, même avec une connexion lente.</p>
@@ -125,11 +152,13 @@ a.wa{color:#0A5A36;font-weight:700}
 </div>
 </div>
 
+<div id="ticket"></div>
+<script src="config.js"></script>
 <script>
 const SB = 'https://rwkyftmghpyeupzolvmc.supabase.co';
 const KEY = 'sb_publishable_VXZU_nR9UGwAM6gJTlgVQg_4-k9hRNB';
 const BUCKET = 'product-images';
-const MAX_PHOTOS = 6;
+const MAX_PHOTOS = 10;
 const $ = (id) => document.getElementById(id);
 const gnf = (n) => Number(n).toLocaleString('fr-FR') + ' GNF';
 const imgUrl = (path) => SB + '/storage/v1/object/public/' + BUCKET + '/' + String(path).split('/').map(encodeURIComponent).join('/');
@@ -196,7 +225,7 @@ function logout() {
   $('app').hidden = true; $('login').hidden = false; $('password').value = '';
 }
 $('logout').addEventListener('click', logout);
-$('refresh').addEventListener('click', () => { if (tab === 'orders') loadOrders(); else loadProducts(); });
+$('refresh').addEventListener('click', () => { if (tab === 'products') loadProducts(); else loadOrders(); });
 
 $('tabs').addEventListener('click', (ev) => {
   const b = ev.target.closest('button'); if (!b) return;
@@ -204,21 +233,23 @@ $('tabs').addEventListener('click', (ev) => {
   $('tabs').querySelectorAll('button').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
   $('ordersView').hidden = tab !== 'orders';
   $('productsView').hidden = tab !== 'products';
+  $('statsView').hidden = tab !== 'stats';
   if (tab === 'products') loadProducts();
+  if (tab === 'stats') loadOrders();
 });
 
 // ---------- Commandes ----------
 async function loadOrders() {
   try {
     orders = await api('/rest/v1/orders?select=*,order_items(*)&order=created_at.desc&limit=200');
-    note(''); renderOrders();
+    note(''); renderOrders(); renderStats();
   } catch (e) { note(e.message); }
 }
 
 async function setStatus(o, status) {
   try {
     await api('/rest/v1/orders?id=eq.' + encodeURIComponent(o.id), { method: 'PATCH', headers: { Prefer: 'return=minimal' }, body: JSON.stringify({ status }) });
-    o.status = status; renderOrders();
+    o.status = status; renderOrders(); renderStats();
   } catch (e) { note(e.message); }
 }
 
@@ -248,9 +279,72 @@ function orderCard(o) {
     h('ul', { class: 'items' }, ...(o.order_items || []).map((i) => h('li', {}, h('span', {}, i.qty + ' x ' + i.product_name), h('span', {}, gnf(i.line_total))))),
     h('div', { class: 'meta' }, 'Livraison : ' + gnf(o.delivery_fee) + ' · ' + (payNames[o.pay_method] || o.pay_method)),
     o.note ? h('div', { class: 'meta' }, 'Remarque : ' + o.note) : '',
-    h('div', { class: 'row' }, h('strong', { style: 'font-size:20px' }, 'Total : ' + gnf(o.total)), sel)
+    h('div', { class: 'row' }, h('strong', { style: 'font-size:20px' }, 'Total : ' + gnf(o.total)), sel,
+      h('button', { class: 'btn ghost', type: 'button', onclick: () => printTicket(o) }, 'Imprimer le ticket'))
   );
 }
+
+// ---------- Ticket de commande ----------
+function printTicket(o) {
+  const shop = (window.SHOP && window.SHOP.name) || 'Boutique';
+  const when = new Date(o.created_at).toLocaleString('fr-FR', { dateStyle: 'long', timeStyle: 'short' });
+  const t = $('ticket');
+  const row = (a, b, cls) => h('tr', cls ? { class: cls } : {}, h('td', {}, a), h('td', {}, b));
+  const lines = (o.order_items || []).map((i) => row(i.qty + ' × ' + i.product_name, gnf(i.line_total)));
+  const mobile = o.pay_method !== 'cash';
+  t.replaceChildren(
+    h('h1', {}, shop),
+    h('div', {}, 'Ticket de livraison'),
+    h('div', { class: 'tk-no' }, o.number),
+    h('div', {}, when),
+    h('hr', {}),
+    h('div', { class: 'tk-big' }, o.customer_name),
+    h('div', {}, 'Tél : ' + o.phone),
+    h('div', {}, 'Commune : ' + o.commune),
+    h('div', {}, 'Repère : ' + o.repere),
+    o.note ? h('div', {}, 'Remarque : ' + o.note) : '',
+    h('hr', {}),
+    h('table', {}, h('tbody', {}, ...lines, row('Livraison', gnf(o.delivery_fee)), row('TOTAL', gnf(o.total), 'tk-tot'))),
+    h('hr', {}),
+    h('div', { class: 'tk-big' }, mobile ? 'Paiement : ' + (payNames[o.pay_method] || o.pay_method) + ' (à vérifier avant livraison)' : 'À encaisser à la livraison : ' + gnf(o.total))
+  );
+  document.body.classList.add('printing');
+  const done = () => { document.body.classList.remove('printing'); window.removeEventListener('afterprint', done); };
+  window.addEventListener('afterprint', done);
+  window.print();
+  setTimeout(() => { if (document.body.classList.contains('printing')) done(); }, 1500);
+}
+
+// ---------- Statistiques ----------
+function renderStats() {
+  if (tab !== 'stats') return;
+  const days = Number($('period').value);
+  const start = days === 0 ? 0 : (() => { const d = new Date(); d.setHours(0, 0, 0, 0); d.setDate(d.getDate() - (days - 1)); return d.getTime(); })();
+  const inPeriod = orders.filter((o) => new Date(o.created_at).getTime() >= start);
+  const valid = inPeriod.filter((o) => o.status !== 'annulee');
+  const delivered = inPeriod.filter((o) => o.status === 'livree');
+  const sum = (l) => l.reduce((a, o) => a + o.total, 0);
+  const stat = (label, value) => h('div', { class: 'stat' }, h('span', {}, label), h('b', {}, value));
+  $('sStats').replaceChildren(
+    stat('Commandes (hors annulées)', String(valid.length)),
+    stat('Ventes (hors annulées)', gnf(sum(valid))),
+    stat('Commandes livrées', String(delivered.length)),
+    stat('Total des livrées', gnf(sum(delivered))),
+    stat('Panier moyen', valid.length ? gnf(Math.round(sum(valid) / valid.length)) : '0 GNF'),
+    stat('Annulées', String(inPeriod.length - valid.length)));
+  const qty = {};
+  valid.forEach((o) => (o.order_items || []).forEach((i) => { qty[i.product_name] = (qty[i.product_name] || 0) + i.qty; }));
+  const top = Object.entries(qty).sort((a, b) => b[1] - a[1]).slice(0, 10);
+  if (!top.length) $('topList').replaceChildren(h('p', { class: 'meta' }, 'Aucune vente sur cette période.'));
+  else {
+    const max = top[0][1];
+    $('topList').replaceChildren(...top.map(([n, q]) => h('div', { class: 'top-row' },
+      h('span', {}, n), h('strong', {}, q + ' pièce' + (q > 1 ? 's' : '')),
+      h('div', { class: 'bar' }, h('i', { style: 'width:' + Math.max(4, Math.round(q / max * 100)) + '%' })))));
+  }
+  $('statsNote').textContent = orders.length >= 200 ? 'Les statistiques portent sur les 200 commandes les plus récentes.' : '';
+}
+$('period').addEventListener('change', renderStats);
 
 // ---------- Produits ----------
 async function loadProducts() {
@@ -398,7 +492,7 @@ $('pForm').addEventListener('submit', async (ev) => {
   if (!Number.isInteger(gros) || gros < 0 || $('pGros').value === '') return pErr('Indiquez le prix en gros (nombre entier).');
   if (!Number.isInteger(min) || min < 1) return pErr('Indiquez à partir de combien de pièces le prix gros s\'applique (1 ou plus).');
   if (!Number.isInteger(sort)) return pErr("L'ordre d'affichage doit être un nombre entier.");
-  if ((!editing || photosTouched) && photos.length < 2) return pErr('Ajoutez au moins 2 photos.');
+  if ((!editing || photosTouched) && photos.length < 1) return pErr('Ajoutez au moins 1 photo.');
   const body = { name, category, description: desc || null, price_detail: detail, price_gros: gros, min_gros: min, sort, images: photos.map((p) => p.path) };
   const btn = $('pSave'); btn.disabled = true; btn.textContent = 'Enregistrement…';
   try {
