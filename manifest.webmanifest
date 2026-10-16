@@ -1,13 +1,13 @@
 {
-  "name": "Hérico Boutique",
-  "short_name": "Hérico",
-  "description": "Commandez en ligne et recevez chez vous à Conakry.",
+  "name": "Makkity Guinée",
+  "short_name": "Makkity",
+  "description": "Style, Qualité au meilleur prix. Commandez en ligne et recevez chez vous à Conakry.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
   "lang": "fr",
-  "background_color": "#0F7A4A",
-  "theme_color": "#0F7A4A",
+  "background_color": "#000000",
+  "theme_color": "#111111",
   "icons": [
     {
       "src": "icon-192.png",

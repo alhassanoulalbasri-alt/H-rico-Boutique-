@@ -3,30 +3,33 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="theme-color" content="#0F7A4A">
+<meta name="theme-color" content="#111111">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Hérico">
+<meta name="apple-mobile-web-app-title" content="Makkity">
 <title>Boutique en ligne Conakry</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@700;800&family=DM+Sans:wght@400;500;700&display=swap">
 <style>
-:root{--ink:#14201A;--muted:#3F4D46;--line:#DDE3DC;--bg:#F6F7F4;--card:#fff;--accent:#0F7A4A;--accent-dark:#0A5A36;--danger:#8A1C14}
+:root{--ink:#111111;--muted:#4A4A4A;--line:#E6E1DA;--bg:#FAF8F5;--card:#fff;--accent:#FF9503;--accent-dark:#A84B00;--danger:#8A1C14}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--ink);font:400 17px/1.5 'DM Sans',system-ui,sans-serif}
 h1,h2,h3{font-family:'Bricolage Grotesque',sans-serif;margin:0}
 .wrap{max-width:1200px;margin:0 auto;padding:0 20px}
 header{background:#fff;border-bottom:1px solid var(--line)}
 header .wrap{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;padding-top:14px;padding-bottom:14px}
-.brand{font:800 24px 'Bricolage Grotesque',sans-serif}
-.btn{display:inline-flex;align-items:center;justify-content:center;min-height:46px;padding:0 22px;border:0;border-radius:999px;background:var(--accent);color:#fff;font:700 16px 'DM Sans',sans-serif;text-decoration:none;cursor:pointer}
-.btn.dark{background:var(--ink);border-radius:12px}
+.brand{font:800 clamp(18px,5.2vw,24px) 'Bricolage Grotesque',sans-serif;display:flex;align-items:center;gap:10px}
+.brand img{width:40px;height:40px;border-radius:50%;background:#000}
+.btn{display:inline-flex;align-items:center;justify-content:center;min-height:46px;padding:0 22px;border:0;border-radius:999px;background:var(--accent);color:var(--ink);font:700 16px 'DM Sans',sans-serif;text-decoration:none;cursor:pointer}
+.btn.dark{background:var(--ink);color:#fff;border-radius:12px}
 .btn.ghost{background:transparent;color:var(--ink);border:2px solid var(--ink)}
 .btn:disabled{opacity:.6;cursor:wait}
+.track{text-align:center;margin:32px 0 0}
 .hero{padding:48px 20px 24px;text-align:center}
 .hero h1{font-size:clamp(32px,6vw,52px);line-height:1.05;max-width:760px;margin:0 auto}
+.facade{display:block;width:100%;max-width:760px;height:auto;margin:28px auto 0;border-radius:20px;border:1px solid var(--line)}
 .hero p{color:var(--muted);font-size:19px;max-width:560px;margin:16px auto}
 .pills{display:flex;flex-wrap:wrap;justify-content:center;gap:8px 20px;color:var(--muted);font-size:15px}
 section{padding:28px 0}
@@ -48,7 +51,7 @@ section h2{font-size:32px;margin-bottom:18px}
 .tools input:focus-visible,.chip:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
 .chips{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;-webkit-overflow-scrolling:touch}
 .chip{flex:none;font:700 15px 'DM Sans',sans-serif;min-height:44px;padding:8px 18px;border-radius:999px;border:1px solid #B9C4BC;background:#fff;color:var(--ink);cursor:pointer}
-.chip[aria-pressed="true"]{background:var(--accent-dark);border-color:var(--accent-dark);color:#fff}
+.chip[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:#fff}
 .gal{position:relative;height:190px;background:#EDF1EA}
 .gal .strip{display:flex;height:100%;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none}
 .gal .strip::-webkit-scrollbar{display:none}
@@ -107,14 +110,14 @@ footer .fbtns a{color:#fff;border:1px solid #5b6b62;border-radius:999px;padding:
 footer .fbtns a:hover{background:#fff;color:var(--ink)}
 [hidden]{display:none!important}
 
-.welcome{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;padding:24px;text-align:center;color:#fff;background:linear-gradient(160deg,#0A5A36 0%,#0F7A4A 55%,#14201A 130%);transition:opacity .45s ease,visibility .45s}
+.welcome{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;padding:20px;text-align:center;color:#fff;background:radial-gradient(ellipse at 50% 35%,#2A1500 0%,#000 65%);overflow-y:auto;transition:opacity .45s ease,visibility .45s}
 .welcome.out{opacity:0;visibility:hidden}
-.welcome-in{max-width:520px;animation:wIn .7s ease both}
-.welcome small{display:block;letter-spacing:.14em;text-transform:uppercase;font-size:13px;font-weight:700;opacity:.8;margin-bottom:18px}
-.welcome h1{font-family:'Bricolage Grotesque','DM Sans',sans-serif;font-size:clamp(36px,9vw,60px);line-height:1.05;margin:0 0 16px}
-.welcome p{font-size:19px;margin:0 auto 28px;opacity:.92;max-width:420px}
-.welcome ul{list-style:none;margin:0 0 32px;padding:0;display:flex;flex-wrap:wrap;justify-content:center;gap:8px 18px;font-size:15px;opacity:.9}
-.welcome button{font:700 18px 'DM Sans',sans-serif;background:#fff;color:var(--accent-dark);border:0;border-radius:999px;padding:16px 36px;cursor:pointer;min-height:52px;box-shadow:0 8px 24px rgba(0,0,0,.25)}
+.welcome-in{max-width:520px;margin:auto;animation:wIn .7s ease both}
+.welcome .wlogo{display:block;width:min(74vw,42vh,380px);height:auto;aspect-ratio:1;margin:0 auto 14px}
+.welcome h1{font-family:'Bricolage Grotesque','DM Sans',sans-serif;font-size:clamp(22px,6vw,32px);line-height:1.1;margin:0 0 8px}
+.welcome p{font-size:17px;margin:0 auto 14px;opacity:.9;max-width:420px}
+.welcome ul{list-style:none;margin:0 0 22px;padding:0;display:flex;flex-wrap:wrap;justify-content:center;gap:6px 18px;font-size:15px;opacity:.9}
+.welcome button{font:700 18px 'DM Sans',sans-serif;background:var(--accent);color:var(--ink);border:0;border-radius:999px;padding:16px 36px;cursor:pointer;min-height:52px;box-shadow:0 8px 24px rgba(255,149,3,.35)}
 .welcome button:focus-visible{outline:3px solid #fff;outline-offset:3px}
 body.locked{overflow:hidden}
 @keyframes wIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
@@ -124,7 +127,7 @@ body.locked{overflow:hidden}
 <body class="locked">
 <div class="welcome" id="welcome" role="dialog" aria-modal="true" aria-labelledby="wTitle">
 <div class="welcome-in">
-<small>Conakry, Guinée</small>
+<img class="wlogo" src="logo-welcome.webp" width="640" height="640" alt="Logo Makkity Guinée : mode, beauté, maison">
 <h1 id="wTitle">Bienvenue chez <span id="wName"></span></h1>
 <p>Commandez en ligne et recevez vos produits chez vous.</p>
 <ul><li>Gros et détail</li><li>Paiement à la livraison</li><li>Orange Money, MTN</li></ul>
@@ -132,7 +135,7 @@ body.locked{overflow:hidden}
 </div>
 </div>
 <header><div class="wrap">
-<span class="brand" id="brandName"></span>
+<span class="brand"><img src="logo-small.webp" width="40" height="40" alt=""><span id="brandName"></span></span>
 <a class="btn" href="#panier" id="cartLink">Panier (0)</a>
 </div></header>
 
@@ -140,6 +143,7 @@ body.locked{overflow:hidden}
 <h1>Tout ce qu'il vous faut, au meilleur prix, livré chez vous à Conakry</h1>
 <p>Choisissez vos produits et payez à la réception, ou par Orange Money et MTN.</p>
 <div class="pills"><span>Vente en gros et au détail</span><span>Paiement à la livraison</span><span>Livraison par commune</span></div>
+<img class="facade" src="facade.jpg" width="1200" height="445" alt="Façade de la boutique Makkity Guinée" loading="lazy">
 </div>
 
 <div class="wrap">
@@ -196,6 +200,7 @@ body.locked{overflow:hidden}
 </div>
 </div>
 </section>
+<div class="track"><a class="btn ghost" href="suivi.html">Suivre ma commande</a></div>
 </div>
 
 <footer><div class="wrap" id="footer"></div></footer>
@@ -504,7 +509,6 @@ async function init() {
     if (CFG.hours) add(info, 'div', '', CFG.hours);
     if (!CFG.address && !CFG.hours) add(info, 'div', '', 'Conakry, Guinée');
     var b = add(f, 'div', 'fbtns');
-    var sv = add(b, 'a', '', 'Suivre ma commande'); sv.href = 'suivi.html';
     if (tel) { var a = add(b, 'a', '', 'Appeler'); a.href = 'tel:+' + tel; }
     if (WHATSAPP) { var w = add(b, 'a', '', 'WhatsApp'); w.href = 'https://wa.me/' + WHATSAPP; w.target = '_blank'; w.rel = 'noopener'; }
     if (/^https:\/\//.test(CFG.facebook || '')) { var fb = add(b, 'a', '', 'Facebook'); fb.href = CFG.facebook; fb.target = '_blank'; fb.rel = 'noopener'; }
